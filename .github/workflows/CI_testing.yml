@@ -51,7 +51,6 @@ jobs:
           remove-item -recurse share/icons/hicolor && remove-item -recurse share/icons/Adwaita/scalable && remove-item -recurse share/icons/Adwaita/cursors
           remove-item -recurse share/icons/Adwaita/16x16 && remove-item -recurse share/icons/Adwaita/symbolic-up-to-32
           gci -directory -recurse .|where-object {$_.getfilesysteminfos().count -eq 0}|remove-item -recurse 
-          compress-archive -path ./* -destinationpath ../tsukimi-${{matrix.arch}}.zip
           7z.exe a ../tsukimi-${{matrix.arch}}.7z ./*
 
       - name: Upload artifact
@@ -59,7 +58,6 @@ jobs:
         with:
           name: tsukimi-${{matrix.arch}}
           path: |
-            artifact/*.zip
             artifact/*.7z
           compression-level: 5
           retention-days: 3

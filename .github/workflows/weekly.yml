@@ -2,8 +2,8 @@ name: feature/win - Windows weekly build
 on:
   workflow_dispatch:
   push:
-    tags:
-      - v*-win
+    branches:
+      - 'feature/win'
   schedule:
     - cron: '14 10 * * 0'
 
@@ -76,36 +76,36 @@ jobs:
           compression-level: 0
           retention-days: 7
 
-  # publish:
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: write
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  #     - name: Download artifacts
-  #       uses: actions/download-artifact@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
  
-  #     - name: Package Windows GNU
-  #       run: |
-  #         mv tsukimi-x86_64-windows-gnu/*.7z .
+      - name: Package Windows GNU
+        run: |
+          mv tsukimi-x86_64-windows-gnu/*.7z .
 
-  #     - name: Calculate hash
-  #       run: |
-  #         sha512sum *.7z > tsukimi.sha512sum
+      - name: Calculate hash
+        run: |
+          sha512sum *.7z > tsukimi.sha512sum
 
-  #     - name: Set date as tag
-  #       run: echo "TAG_NAME=windows-weekly-$(date --rfc-3339='date')" >> $GITHUB_ENV
+      - name: Set date as tag
+        run: echo "TAG_NAME=windows-weekly-$(date --rfc-3339='date')" >> $GITHUB_ENV
 
-  #     - name: Upload Github Assets
-  #       uses: softprops/action-gh-release@v2
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         files: |
-  #           *.7z
-  #           *.sha512sum
-  #         tag_name: ${{ env.TAG_NAME }}
+      - name: Upload Github Assets
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            *.7z
+            *.sha512sum
+          tag_name: ${{ env.TAG_NAME }}
