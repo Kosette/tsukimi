@@ -93,11 +93,17 @@ jobs:
       - name: Get latest tag name
         run: echo "TAG_NAME=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
 
+      - name: Get latest CHANGELOG
+        run: |
+          apt install awk -y
+          awk '/^## /{if(++count==2){exit}next}count==1{print}' CHANGELOG.md >> ${{github.workspace}}-CHANGELOG.md
+
       - name: Upload Github Assets
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          body_path: ${{github.workspace}}-CHANGELOG.md
           files: |
             *.zip
             *.7z
