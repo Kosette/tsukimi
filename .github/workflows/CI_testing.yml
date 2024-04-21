@@ -58,6 +58,7 @@ jobs:
           7z.exe a ../tsukimi-${{matrix.arch}}.7z ./*
 
       - name: Build Complete Package
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         run: |
           cd artifact/ && cp -r tsukimi-windows-gnu-amd64 tsukimi-windows-gnu-amd64-complete && cd tsukimi-windows-gnu-amd64-complete && mkdir mpv && cd mpv
           Invoke-WebRequest -Uri "https://github.com/ZBound/tkm-config/releases/latest/download/mqv.7z" -OutFile mpv.7z
