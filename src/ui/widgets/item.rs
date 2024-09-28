@@ -429,12 +429,14 @@ impl ItemPage {
                 imp.episode_list_vec.replace(continue_play_list);
             }
             _ => {
-                let season_list = imp.season_list_vec.borrow();
-                let Some(season) = season_list.iter().find(|s| s.name == season_name) else {
-                    return;
-                };
+                let season_id = {
+                    let season_list = imp.season_list_vec.borrow();
+                    let Some(season) = season_list.iter().find(|s| s.name == season_name) else {
+                        return;
+                    };
 
-                let season_id = season.id.clone();
+                    season.id.clone()
+                };
 
                 let episodes = match spawn_tokio(async move {
                     EMBY_CLIENT.get_episodes(&series_id, &season_id).await

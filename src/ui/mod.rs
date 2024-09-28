@@ -54,7 +54,7 @@ pub fn load_css() {
                     border-radius: 999px;
                     margin: 3px;
                 }}
-                
+
                 box>overlay>image {{
                     background-color: {};
                     border-radius: 999px;
@@ -66,6 +66,9 @@ pub fn load_css() {
         accent_color,
         accent_color
     ));
+
+    #[cfg(target_os = "windows")]
+    styles.push_str("window {box-shadow: 0px 0px 5px 0px rgba(5, 5, 5, 0.4);}");
 
     provider.load_from_string(&styles);
 

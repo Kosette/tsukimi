@@ -3,22 +3,20 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "main"
+      - "dev"
     paths-ignore:
       - "docs/**"
-      - "**/.gitignore"
-      - "**/.dockerignore"
+      - ".gitignore"
       - LICENSE
-      - "**/*.md"
-  pull_request:
-    branches:
-      - "main"
-    paths-ignore:
-      - "docs/**"
-      - "**/.gitignore"
-      - "**/.dockerignore"
-      - LICENSE
-      - "**/*.md"
+      - "*.md"
+  # pull_request:
+  #   branches:
+  #     - "dev"
+  #   paths-ignore:
+  #     - "docs/**"
+  #     - ".gitignore"
+  #     - LICENSE
+  #     - "*.md"
 
 env:
   CARGO_TERM_COLOR: always
@@ -38,7 +36,6 @@ jobs:
           #   env: x86_64
           - arch: ucrt64-x86_64-windows-gnu
             os: windows-latest
-            target: x86_64-pc-windows-gnu
             msystem: ucrt64
             env: ucrt-x86_64
 
@@ -70,7 +67,7 @@ jobs:
             mingw-w64-${{ matrix.env }}-gst-libav
             curl
 
-      - name: Build tsukimi-${{ matrix.target }}
+      - name: Build tsukimi-${{ matrix.arch }}
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         shell: msys2 {0}
         run: |
@@ -151,8 +148,8 @@ jobs:
         with:
           name: tsukimi-${{matrix.arch}}
           path: |
-            artifact/*.exe
             artifact/*.7z
+            artifact/*.exe
             artifact/*.sha512sum
           compression-level: 0
           retention-days: 3
