@@ -5,7 +5,8 @@ use std::{
         atomic::AtomicU32,
         Arc,
         Mutex,
-    }, thread::JoinHandle,
+    },
+    thread::JoinHandle,
 };
 
 use gtk::gdk::GLContext;
@@ -568,6 +569,7 @@ const KEYSTRING_MAP: &[(&str, &str)] = &[
     ("", "Shift_R"),
     ("", "grave"),
     ("SPACE", " "),
+    ("TAB", "\t"),
 ];
 
 fn keyval_to_keystr(keyval: u32) -> Option<String> {

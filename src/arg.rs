@@ -37,6 +37,27 @@ pub struct Args {
     gdk_scale: Option<String>,
 }
 
+struct Envs {
+    log_level: LevelFilter,
+    log_file: Option<String>,
+}
+
+impl Envs {
+    fn load() -> Self {
+        Self {
+            log_level: match std::env::var("TSUKIMI_LOG_LEVEL").as_deref() {
+                Ok("ERROR") => LevelFilter::ERROR,
+                Ok("WARN") => LevelFilter::WARN,
+                Ok("INFO") => LevelFilter::INFO,
+                Ok("DEBUG") => LevelFilter::DEBUG,
+                Ok("TRACE") => LevelFilter::TRACE,
+                _ => LevelFilter::INFO,
+            },
+            log_file: std::env::var("TSUKIMI_LOG_FILE").ok(),
+        }
+    }
+}
+
 impl Args {
     /// Build the tracing subscriber using parameters from the command line
     /// arguments
@@ -53,11 +74,20 @@ impl Args {
             Some("info") => builder.with_max_level(LevelFilter::INFO),
             Some("debug") => builder.with_max_level(LevelFilter::DEBUG),
             Some("trace") => builder.with_max_level(LevelFilter::TRACE),
-            _ => builder.with_max_level(LevelFilter::INFO),
+            _ => builder.with_max_level(Envs::load().log_level),
         };
 
         match &self.log_file {
-            None => builder.with_writer(io::stderr).init(),
+            None => {
+                if let Some(f) = Envs::load().log_file {
+                    builder
+                        .with_ansi(false)
+                        .with_writer(Mutex::new(File::create(f).unwrap()))
+                        .init()
+                } else {
+                    builder.with_writer(io::stderr).init()
+                }
+            }
             Some(f) => {
                 let tracing_writer = match File::create(f) {
                     Ok(f) => f,

@@ -19,7 +19,10 @@ use super::tsukimi_mpv::{
 use crate::client::client::EMBY_CLIENT;
 
 mod imp {
-    use std::{cell::RefCell, thread::JoinHandle};
+    use std::{
+        cell::RefCell,
+        thread::JoinHandle,
+    };
 
     use gtk::{
         gdk::GLContext,
@@ -65,7 +68,7 @@ mod imp {
         }
 
         fn dispose(&self) {
-            if let Some(mpv) = self.mpv.mpv.lock().ok() {
+            if let Ok(mpv) = self.mpv.mpv.lock() {
                 drop(mpv);
             }
         }
