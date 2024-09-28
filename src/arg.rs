@@ -45,6 +45,27 @@ pub struct Args {
     gdk_scale: Option<i8>,
 }
 
+struct Envs {
+    log_level: LevelFilter,
+    log_file: Option<String>,
+}
+
+impl Envs {
+    fn load() -> Self {
+        Self {
+            log_level: match std::env::var("TSUKIMI_LOG_LEVEL").as_deref() {
+                Ok("ERROR") => LevelFilter::ERROR,
+                Ok("WARN") => LevelFilter::WARN,
+                Ok("INFO") => LevelFilter::INFO,
+                Ok("DEBUG") => LevelFilter::DEBUG,
+                Ok("TRACE") => LevelFilter::TRACE,
+                _ => LevelFilter::INFO,
+            },
+            log_file: std::env::var("TSUKIMI_LOG_FILE").ok(),
+        }
+    }
+}
+
 impl Args {
     /// Build the tracing subscriber using parameters from the command line
     /// arguments
@@ -61,11 +82,20 @@ impl Args {
             Some("info") => builder.with_max_level(LevelFilter::INFO),
             Some("debug") => builder.with_max_level(LevelFilter::DEBUG),
             Some("trace") => builder.with_max_level(LevelFilter::TRACE),
-            _ => builder.with_max_level(LevelFilter::INFO),
+            _ => builder.with_max_level(Envs::load().log_level),
         };
 
         match &self.log_file {
-            None => builder.with_writer(io::stderr).init(),
+            None => {
+                if let Some(f) = Envs::load().log_file {
+                    builder
+                        .with_ansi(false)
+                        .with_writer(Mutex::new(File::create(f).unwrap()))
+                        .init()
+                } else {
+                    builder.with_writer(io::stderr).init()
+                }
+            }
             Some(f) => {
                 let tracing_writer = match File::create(f) {
                     Ok(f) => f,
@@ -88,13 +118,13 @@ impl Args {
     fn init_gsk_renderer(&self) {
         if let Some(renderer) = self.gsk_renderer.as_deref() {
             info!("Setting GSK_RENDERER to {}", renderer);
-            std::env::set_var("GSK_RENDERER", renderer);
+            unsafe { std::env::set_var("GSK_RENDERER", renderer) };
             return;
         }
 
         if std::env::var("GSK_RENDERER").is_err() {
             info!("Falling back to default GSK_RENDERER: {}", DEFAULT_RENDERER);
-            std::env::set_var("GSK_RENDERER", DEFAULT_RENDERER);
+            unsafe { std::env::set_var("GSK_RENDERER", DEFAULT_RENDERER) };
         }
     }
 
@@ -130,13 +160,13 @@ impl Args {
     fn init_config_dirs(&self) {
         if let Some(xdg_cache_home) = self.xdg_cache_home.as_deref() {
             info!("Windows: Setting XDG_CACHE_HOME to {}", xdg_cache_home);
-            std::env::set_var("XDG_CACHE_HOME", xdg_cache_home);
+            unsafe { std::env::set_var("XDG_CACHE_HOME", xdg_cache_home) };
         }
 
         if std::env::var("XDG_CACHE_HOME").is_err() {
             info!("Windows: Falling back to default XDG_CACHE_HOME: %LOCALAPPDATA%");
             let config_local_dir = dirs::config_local_dir().expect("Failed to get %LOCALAPPDATA%");
-            std::env::set_var("XDG_CACHE_HOME", config_local_dir);
+            unsafe { std::env::set_var("XDG_CACHE_HOME", config_local_dir) };
         }
     }
 
@@ -144,12 +174,12 @@ impl Args {
     fn init_gdk_scale(&self) {
         if let Some(scale) = self.gdk_scale {
             info!("Windows: Setting GDK_SCALE to {}", scale);
-            std::env::set_var("GDK_SCALE", scale.to_string());
+            unsafe { std::env::set_var("GDK_SCALE", scale.to_string()) };
         }
 
         if std::env::var("GDK_SCALE").is_err() {
             info!("Windows: Falling back to default GDK_SCALE: 1");
-            std::env::set_var("GDK_SCALE", "1");
+            unsafe { std::env::set_var("GDK_SCALE", "1") };
         }
     }
 

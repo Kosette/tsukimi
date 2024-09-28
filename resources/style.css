@@ -24,8 +24,8 @@ button.pill.no-padding-small {
 }
 
 .circular.smaller {
-  min-height:28px;
-  min-width:28px;
+  min-height: 28px;
+  min-width: 28px;
 }
 
 .mediainfo {
@@ -45,7 +45,6 @@ button.pill.no-padding-small {
 .logo {
   background: transparent;
 }
-
 
 .bottom-bar {
   background: transparent;
@@ -85,7 +84,7 @@ button.pill.no-padding-small {
   border-radius: 10px;
 }
 
-.tu-listview>row {
+.tu-listview > row {
   margin: 10px;
   border-radius: 10px;
 }
@@ -100,7 +99,8 @@ button.star:hover {
     -gtk-icon-transform: rotate(-72deg);
   }
 
-  to {}
+  to {
+  }
 }
 
 @keyframes rotate_unstar {
@@ -108,7 +108,8 @@ button.star:hover {
     -gtk-icon-transform: rotate(72deg);
   }
 
-  to {}
+  to {
+  }
 }
 
 button.star.interacted.starred image {
@@ -132,13 +133,13 @@ button.star.interacted:not(.starred) image {
   border-radius: 10px;
 }
 
-.horizontal-listview>row {
+.horizontal-listview > row {
   margin-left: 9px;
   margin-right: 9px;
   border-radius: 10px;
 }
 
-.vertical-listview>row {
+.vertical-listview > row {
   margin: 9px;
   border-radius: 10px;
 }
@@ -155,35 +156,35 @@ gridview {
   background-color: transparent;
 }
 
-gridview>child box {
+gridview > child box {
   margin: 0px;
 }
 
-overlay>label {
+overlay > label {
   background-color: #aeb5fa;
   border-radius: 50px;
   margin: 3px;
 }
 
-revealer>box>box>widget {
+revealer > box > box > widget {
   background-color: rgba(1, 1, 1, 0.1);
   border-radius: 10px;
 }
 
-revealer>box>box>widget>box {
+revealer > box > box > widget > box {
   margin: 10px;
 }
 
-tabbar>revealer>box {
+tabbar > revealer > box {
   background-color: transparent;
 }
 
-scrolledwindow>viewport>box>box>box {
+scrolledwindow > viewport > box > box > box {
   margin-left: 15px;
   margin-top: 15px;
 }
 
-.osd>box {
+.osd > box {
   margin: 0px;
   padding: 0px;
   border-radius: 10px;
@@ -252,9 +253,9 @@ row image {
 }
 
 .scroll-spinner {
-	background-color: rgba(255,255,255,0.5);
-	padding: 8px;
-	border-radius: 99px;
+  background-color: rgba(255, 255, 255, 0.5);
+  padding: 8px;
+  border-radius: 99px;
 }
 
 .themeselector checkbutton.follow:checked,
@@ -297,9 +298,9 @@ checkbutton.theme-selector radio:checked {
 }
 
 .filter-label {
-	outline-style: solid;
-	outline-width: 2px;
-	border-radius: 99px;
+  outline-style: solid;
+  outline-width: 2px;
+  border-radius: 99px;
 }
 
 .filter-label.color1 {
@@ -341,4 +342,67 @@ checkbutton.theme-selector radio:checked {
 .volume-bar {
   padding: 10px;
   border-radius: 50px;
+}
+
+/* Scale UI Font to  125% */
+* {
+  -gtk-dpi: 125;
+}
+
+/* GTK4 Window Controls Styles */
+windowcontrols > button {
+  color: transparent;
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0;
+  margin: 0 2px;
+  border: none;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+windowcontrols > button > image {
+  padding: 0;
+  -gtk-icon-size: 14px;
+  color: rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+/* Button colors */
+button.titlebutton.close,
+windowcontrols > button.close {
+  background-color: #ff5f56;
+}
+
+button.titlebutton.maximize,
+windowcontrols > button.maximize {
+  background-color: #ffbd2e;
+}
+
+button.titlebutton.minimize,
+windowcontrols > button.minimize {
+  background-color: #27c93f;
+}
+
+/* Hover states */
+windowcontrols > button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+windowcontrols > button:hover > image {
+  opacity: 1;
+  color: rgba(0, 0, 0, 0.9);
+}
+
+windowcontrols > button.close:hover {
+  background-color: #ff5f56;
+}
+
+windowcontrols > button.maximize:hover {
+  background-color: #ffbd2e;
+}
+
+windowcontrols > button.minimize:hover {
+  background-color: #27c93f;
 }

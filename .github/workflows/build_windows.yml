@@ -3,22 +3,12 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "main"
+      - "dev"
     paths-ignore:
       - "docs/**"
-      - "**/.gitignore"
-      - "**/.dockerignore"
+      - ".gitignore"
       - LICENSE
-      - "**/*.md"
-  pull_request:
-    branches:
-      - "main"
-    paths-ignore:
-      - "docs/**"
-      - "**/.gitignore"
-      - "**/.dockerignore"
-      - LICENSE
-      - "**/*.md"
+      - "*.md"
 
 env:
   CARGO_TERM_COLOR: always
@@ -38,7 +28,6 @@ jobs:
           #   env: x86_64
           - arch: ucrt64-x86_64-windows-gnu
             os: windows-latest
-            target: x86_64-pc-windows-gnu
             msystem: ucrt64
             env: ucrt-x86_64
 
@@ -75,20 +64,23 @@ jobs:
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         shell: pwsh
         run: |
-          $json = curl -s "https://api.github.com/repos/shinchiro/mpv-winbuild-cmake/releases/latest" | ConvertFrom-Json
-          $asset = $json.assets | Where-Object { $_.name -match "mpv-dev-x86_64-\d{8}-git" } | Select-Object -First 1
-          curl -L -o $asset.name $asset.browser_download_url
-          7z x -y $asset.name -olibmpv
-          cp -force libmpv/libmpv.dll.a c:/msys64/${{ matrix.msystem }}/lib/
-          cp -force libmpv/libmpv-2.dll c:/msys64/${{ matrix.msystem }}/bin/
-          cp -force -recurse libmpv/include/mpv c:/msys64/${{ matrix.msystem }}/include/
+          $api_gh = "https://api.github.com/repos/shinchiro/mpv-winbuild-cmake/releases/latest"
+          $json = Invoke-WebRequest $api_gh -MaximumRedirection 0 -ErrorAction Ignore -UseBasicParsing | ConvertFrom-Json
+          $filename = $json.assets | where { $_.name -Match "mpv-dev-x86_64-v3" } | Select-Object -ExpandProperty name
+          $download_link = $json.assets | where { $_.name -Match "mpv-dev-x86_64-v3" } | Select-Object -ExpandProperty browser_download_url
+          Write-Host "Downloading" $filename -ForegroundColor Green
+          Invoke-WebRequest -Uri $download_link -UserAgent ([Microsoft.PowerShell.Commands.PSUserAgent]::FireFox) -OutFile $filename
+          7z.exe x $filename -olibmpv
+          cp -force libmpv/libmpv.dll.a c:/msys64/${{ matrix.msystem }}/lib
+          cp -force libmpv/libmpv-2.dll c:/msys64/${{ matrix.msystem }}/bin
+          cp -force -recurse libmpv/include/mpv c:/msys64/${{ matrix.msystem }}/include
 
-      - name: Build tsukimi-${{ matrix.target }}
+      - name: Build tsukimi-${{ matrix.arch }}
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         shell: msys2 {0}
         run: |
           export PATH="/c/Users/runneradmin/.cargo/bin:$PATH"
-          rustup default stable-gnu
+          rustup default nightly-gnu
           cargo build --release --locked
 
       - name: Prepare Package
@@ -162,10 +154,10 @@ jobs:
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v4
         with:
-          name: tsukimi-${{matrix.target}}
+          name: tsukimi-${{matrix.arch}}
           path: |
-            artifact/*.exe
             artifact/*.7z
+            artifact/*.exe
             artifact/*.sha512sum
           compression-level: 0
           retention-days: 3

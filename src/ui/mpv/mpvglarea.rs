@@ -8,8 +8,8 @@ use libmpv2::SetData;
 use tracing::info;
 
 use super::tsukimi_mpv::{
-    TrackSelection,
     ACTIVE,
+    TrackSelection,
 };
 use crate::{
     client::emby_client::EMBY_CLIENT,
@@ -36,9 +36,9 @@ mod imp {
     use crate::{
         close_on_error,
         ui::mpv::tsukimi_mpv::{
-            TsukimiMPV,
             RENDER_UPDATE,
             SHUTDOWN,
+            TsukimiMPV,
         },
     };
 

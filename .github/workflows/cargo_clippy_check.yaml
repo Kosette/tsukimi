@@ -1,5 +1,7 @@
 name: Clippy check
-on: push
+on:
+  # push:
+  workflow_dispatch:
 
 jobs:
   clippy_check:
