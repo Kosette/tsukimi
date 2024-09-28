@@ -1,8 +1,14 @@
 name: CI Passing
 on:
-  push:
-    tags:
-      - v*
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - "dev"
+  #   paths-ignore:
+  #     - "docs/**"
+  #     - "*.md"
+  #     - LICENSE
+  #     - .gitignore
 
 env:
   CARGO_TERM_COLOR: always
@@ -23,7 +29,7 @@ jobs:
             os: ubuntu-24.04-arm
             target: arm64
           # x86_64-windows-gnu
-          - arch: x86_64-windows-gnu
+          - arch: ucrt-x86_64-windows-gnu
             os: windows-latest
             target: amd64
 
@@ -196,7 +202,7 @@ jobs:
 
       - name: Get latest tag name
         id: tag
-        run: echo "TAG_NAME=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+        run: echo "TAG_NAME=v$(date '+%Y-%m-%d-%H%M%S')" >> $GITHUB_OUTPUT
 
       - name: Set prerelease variable
         if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref, 'rc')

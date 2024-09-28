@@ -64,6 +64,9 @@ mod imp {
                 accent_color, accent_color,
             ));
 
+            #[cfg(target_os = "windows")]
+            provider.load_from_string("window {box-shadow: 0px 0px 5px 0px rgba(5, 5, 5, 0.4);}");
+
             gtk::style_context_add_provider_for_display(
                 &Display::default().expect("Could not connect to a display."),
                 &provider,
