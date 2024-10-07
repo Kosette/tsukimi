@@ -28,4 +28,4 @@ jobs:
         with:
           name: tsukimi-migtool
           path: |
-            target/tsukimi_migtool.exe
+            target/release/tsukimi_migtool.exe
