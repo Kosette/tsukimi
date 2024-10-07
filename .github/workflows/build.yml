@@ -1,0 +1,31 @@
+name: Build migtool
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - migtool
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+  RUST_BACKTRACE: full
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        timeout-minutes: 20
+        run: |
+          rustup default stable-msvc
+          cargo b -r
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tsukimi-migtool
+          path: |
+            target/tsukimi_migtool.exe
