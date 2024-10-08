@@ -12,6 +12,8 @@ env:
 
 jobs:
   build:
+    permissions:
+      contents: write
     runs-on: windows-latest
 
     steps:
@@ -28,4 +30,13 @@ jobs:
         with:
           name: tsukimi-migtool
           path: |
-            target/release/tsukimi_migtool.exe
+            target/release/*.exe
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            target/release/*.exe
+          tag_name: tsukimi-migtool
