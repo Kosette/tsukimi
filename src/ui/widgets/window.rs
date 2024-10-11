@@ -436,8 +436,7 @@ impl Window {
                         }
                     };
 
-                let Some(texture) =
-                    gtk::gdk::Texture::from_file(&gio::File::for_path(avatar)).ok()
+                let Some(texture) = gtk::gdk::Texture::from_file(&gio::File::for_path(avatar)).ok()
                 else {
                     obj.imp()
                         .avatar
@@ -946,7 +945,7 @@ impl Window {
         }
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     fn prevent_suspend(&self) {
         let app = self.application().expect("No application found");
         let cookie = app.inhibit(
@@ -957,7 +956,7 @@ impl Window {
         self.imp().suspend_cookie.replace(Some(cookie));
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     pub fn allow_suspend(&self) {
         let app = self.application().expect("No application found");
         if let Some(cookie) = self.imp().suspend_cookie.take() {

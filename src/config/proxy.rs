@@ -50,7 +50,7 @@ pub fn get_proxy_settings() -> Option<String> {
     None
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 pub fn get_proxy_settings() -> Option<String> {
     use std::env;
 

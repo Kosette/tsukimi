@@ -10,16 +10,15 @@ on:
 env:
   CARGO_TERM_COLOR: always
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+  RUST_BACKTRACE: full
 
 jobs:
   build-release:
-    env:
-      RUST_BACKTRACE: full
     strategy:
       matrix:
         include:
           - arch-name: x86_64-macos
-            os: macos-latest
+            os: macos-14-large
             target: x86_64-apple-darwin
             artifact: tsukimi
             ext:
@@ -32,9 +31,8 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          brew install gtk4
-          brew install libadwaita
-          rustup target add ${{matrix.target}}
+          brew install gtk4 gstreamer libadwaita mpv glib
+          rustup default stable-${{matrix.target}}
           cargo build --release --locked
 
       - name: Make MacOS package

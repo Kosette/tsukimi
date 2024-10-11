@@ -1,7 +1,7 @@
 const LINGUAS: &str = include_str!("po/LINGUAS");
 
 use std::path::Path;
-#[cfg(any(target_os = "linux", target_os = "windows"))]
+#[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
 use std::process::Command;
 
 fn main() {
@@ -11,7 +11,7 @@ fn main() {
         "tsukimi.gresource",
     );
 
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
     {
         let po_files: Vec<String> = LINGUAS
             .lines()

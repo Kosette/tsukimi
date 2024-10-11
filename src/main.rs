@@ -22,7 +22,7 @@ const APP_ID: &str = "moe.tsuna.tsukimi";
 
 const GETTEXT_PACKAGE: &str = "tsukimi";
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 const LINUX_LOCALEDIR: &str = "/usr/share/locale";
 #[cfg(target_os = "windows")]
 const WINDOWS_LOCALEDIR: &str = "share\\locale";
@@ -30,7 +30,7 @@ const WINDOWS_LOCALEDIR: &str = "share\\locale";
 fn locale_dir() -> &'static str {
     static LOCALEDIR: OnceCell<&'static str> = OnceCell::new();
     LOCALEDIR.get_or_init(|| {
-        #[cfg(target_os = "linux")]
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
         {
             LINUX_LOCALEDIR
         }
@@ -51,7 +51,7 @@ fn locale_dir() -> &'static str {
 
 fn main() -> glib::ExitCode {
     // Initialize gettext
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
     {
         setlocale(LocaleCategory::LcAll, "");
         bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8")
