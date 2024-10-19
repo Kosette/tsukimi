@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - migtool
+    tags:
+      - migtool*
 
 env:
   CARGO_TERM_COLOR: always
@@ -32,6 +34,10 @@ jobs:
           path: |
             target/release/*.exe
 
+      - name: Get release tag
+        run: |
+          write-host "TAG_NAME=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+
       - name: Release
         uses: softprops/action-gh-release@v2
         env:
@@ -39,4 +45,4 @@ jobs:
         with:
           files: |
             target/release/*.exe
-          tag_name: tsukimi-migtool
+          tag_name: ${{ env.TAG_NAME }}

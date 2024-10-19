@@ -14,10 +14,12 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Convert tsukimi.toml into .reg file, is default command
+    /// Convert tsukimi.toml into .reg file, for older version
     Convert,
-    /// Backup all keys in tsukimi registry
+    /// Backup all keys in tsukimi registry, for moe.tsuna.tsukimi
     Backup,
+    /// Migrate from v0.16.3, from moe.tsukimi to moe.tsuna.tsukimi
+    Migrate,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -39,9 +41,10 @@ struct Account {
 fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
-    match cli.command.unwrap_or(Commands::Convert) {
+    match cli.command.unwrap_or(Commands::Migrate) {
         Commands::Convert => convert_toml_to_reg()?,
         Commands::Backup => backup_registry()?,
+        Commands::Migrate => migrate()?,
     }
 
     Ok(())
@@ -73,10 +76,7 @@ fn convert_toml_to_reg() -> Result<(), Box<dyn Error>> {
         file.write_all(&utf16_unit.to_le_bytes())?;
     }
 
-    println!(
-        "Successfully generated .reg file at: {:?}",
-        file.metadata()?.len()
-    );
+    println!("Successfully generated .reg file at: `tsukimi_accounts.reg`",);
     println!("You can now import this file by double-clicking it or using the 'regedit' command.");
 
     Ok(())
@@ -84,7 +84,7 @@ fn convert_toml_to_reg() -> Result<(), Box<dyn Error>> {
 
 fn backup_registry() -> Result<(), Box<dyn Error>> {
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let path = r"Software\GSettings\moe\tsukimi";
+    let path = r"Software\GSettings\moe\tsuna\tsukimi";
     let key = hkcu.open_subkey(path)?;
 
     let mut reg_content = String::from("Windows Registry Editor Version 5.00\r\n\r\n");
@@ -112,7 +112,13 @@ fn backup_registry() -> Result<(), Box<dyn Error>> {
                         .map(|chunk| u16::from_ne_bytes([chunk[0], chunk[1]]))
                         .collect::<Vec<u16>>(),
                 );
-                format!("\"{}\"", value.trim_end_matches('\0').replace("\"", "\\\""))
+                format!(
+                    "\"{}\"",
+                    value
+                        .trim_end_matches('\0')
+                        .replace("\\", "\\\\")
+                        .replace("\"", "\\\"")
+                )
             }
             REG_MULTI_SZ => {
                 let values = String::from_utf16_lossy(
@@ -152,10 +158,89 @@ fn backup_registry() -> Result<(), Box<dyn Error>> {
         file.write_all(&utf16_unit.to_le_bytes())?;
     }
 
-    println!(
-        "Successfully backed up registry to: {:?}",
-        file.metadata()?.len()
-    );
+    println!("Successfully backed up registry to: `tsukimi_backup.reg`\ndouble-click it to import settings.");
+
+    Ok(())
+}
+
+fn migrate() -> Result<(), Box<dyn Error>> {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let path = r"Software\GSettings\moe\tsukimi";
+    let path_new = r"Software\GSettings\moe\tsuna\tsukimi";
+    let key = hkcu.open_subkey(path)?;
+
+    let mut reg_content = String::from("Windows Registry Editor Version 5.00\r\n\r\n");
+    reg_content.push_str(&format!("[HKEY_CURRENT_USER\\{}]\r\n", path_new));
+
+    for value in key.enum_values().map(|x| x.unwrap()) {
+        let name = value.0;
+        let data = value.1;
+        let reg_type = data.vtype;
+        let raw_data = data.bytes;
+
+        let formatted_value = match reg_type {
+            REG_DWORD => {
+                let value = u32::from_le_bytes(raw_data[..4].try_into().unwrap());
+                format!("dword:{:08x}", value)
+            }
+            REG_QWORD => {
+                let value = u64::from_le_bytes(raw_data[..8].try_into().unwrap());
+                format!("qword:{:016x}", value)
+            }
+            REG_SZ | REG_EXPAND_SZ => {
+                let value = String::from_utf16_lossy(
+                    &raw_data
+                        .chunks_exact(2)
+                        .map(|chunk| u16::from_ne_bytes([chunk[0], chunk[1]]))
+                        .collect::<Vec<u16>>(),
+                );
+                format!(
+                    "\"{}\"",
+                    value
+                        .trim_end_matches('\0')
+                        .replace("\\", "\\\\")
+                        .replace("\"", "\\\"")
+                )
+            }
+            REG_MULTI_SZ => {
+                let values = String::from_utf16_lossy(
+                    &raw_data
+                        .chunks_exact(2)
+                        .map(|chunk| u16::from_ne_bytes([chunk[0], chunk[1]]))
+                        .collect::<Vec<u16>>(),
+                );
+                format!(
+                    "hex(7):{}",
+                    values
+                        .split('\0')
+                        .filter(|s| !s.is_empty())
+                        .collect::<Vec<&str>>()
+                        .iter()
+                        .map(|s| s
+                            .encode_utf16()
+                            .map(|c| format!("{:04x}", c))
+                            .collect::<Vec<String>>()
+                            .join(","))
+                        .collect::<Vec<String>>()
+                        .join(",00,")
+                )
+            }
+            _ => continue,
+        };
+
+        reg_content.push_str(&format!("\"{}\"={}\r\n", name, formatted_value));
+    }
+
+    let output_path = env::current_dir()?.join("tsukimi_migrate.reg");
+    let mut file = File::create(output_path)?;
+
+    file.write_all(&[0xFF, 0xFE])?;
+
+    for utf16_unit in reg_content.encode_utf16() {
+        file.write_all(&utf16_unit.to_le_bytes())?;
+    }
+
+    println!("Successfully migrate registry to: `tsukimi_migrate.reg`\ndouble-click it to import settings",);
 
     Ok(())
 }
