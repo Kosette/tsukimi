@@ -2,8 +2,6 @@ name: Build migtool
 on:
   workflow_dispatch:
   push:
-    branches:
-      - migtool
     tags:
       - migtool*
 
