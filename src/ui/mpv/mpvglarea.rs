@@ -68,7 +68,7 @@ mod imp {
         }
 
         fn dispose(&self) {
-            if let Some(mpv) = self.mpv.mpv.lock().ok() {
+            if let Ok(mpv) = self.mpv.mpv.lock() {
                 drop(mpv);
             }
         }
