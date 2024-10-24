@@ -6,7 +6,7 @@ use std::{env, fs::File, io::Write};
 use winreg::{enums::*, RegKey};
 
 #[derive(Parser)]
-#[command(author, version, about, long_about = None)]
+#[command(author, version, about, long_about = None, arg_required_else_help(true))]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
@@ -14,12 +14,15 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Convert tsukimi.toml into .reg file, for older version
-    Convert,
-    /// Backup all keys in tsukimi registry, for moe.tsuna.tsukimi
+    /// Convert tsukimi.toml into .reg file, for older version. `--help` to see more.
+    Convert {
+        /// Set the path to tsukimi.toml, optional.
+        /// default `%APPDATA%\tsukimi\tsukimi.toml`
+        #[arg(short, long)]
+        file: Option<String>,
+    },
+    /// Backup all keys in tsukimi registry, for moe.tsukimi
     Backup,
-    /// Migrate from v0.16.3, from moe.tsukimi to moe.tsuna.tsukimi
-    Migrate,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -41,21 +44,25 @@ struct Account {
 fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
-    match cli.command.unwrap_or(Commands::Migrate) {
-        Commands::Convert => convert_toml_to_reg()?,
+    match cli.command.unwrap_or(Commands::Convert { file: None }) {
+        Commands::Convert { file } => convert_toml_to_reg(file)?,
         Commands::Backup => backup_registry()?,
-        Commands::Migrate => migrate()?,
+        // Commands::Migrate => migrate()?,
     }
 
     Ok(())
 }
 
-fn convert_toml_to_reg() -> Result<(), Box<dyn Error>> {
-    let mut path = env::var("APPDATA")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| env::current_dir().unwrap());
-    path.push("tsukimi");
-    path.push("tsukimi.toml");
+fn convert_toml_to_reg(file: Option<String>) -> Result<(), Box<dyn Error>> {
+    let path = match file {
+        Some(f) => PathBuf::from(f),
+        None => {
+            let mut path = env::var("APPDATA").map(PathBuf::from)?;
+            path.push("tsukimi");
+            path.push("tsukimi.toml");
+            path
+        }
+    };
 
     let toml_content = std::fs::read_to_string(path)?;
     let config: Config = toml::from_str(&toml_content)?;
@@ -84,7 +91,7 @@ fn convert_toml_to_reg() -> Result<(), Box<dyn Error>> {
 
 fn backup_registry() -> Result<(), Box<dyn Error>> {
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let path = r"Software\GSettings\moe\tsuna\tsukimi";
+    let path = r"Software\GSettings\moe\tsukimi";
     let key = hkcu.open_subkey(path)?;
 
     let mut reg_content = String::from("Windows Registry Editor Version 5.00\r\n\r\n");
@@ -163,7 +170,7 @@ fn backup_registry() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn migrate() -> Result<(), Box<dyn Error>> {
+fn _migrate() -> Result<(), Box<dyn Error>> {
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let path = r"Software\GSettings\moe\tsukimi";
     let path_new = r"Software\GSettings\moe\tsuna\tsukimi";
