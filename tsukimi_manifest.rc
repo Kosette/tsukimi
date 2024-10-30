@@ -1,1 +1,3 @@
 iconName ICON "resources/icons/tsukimi.ico"
+#define RT_MANIFEST 24
+1 RT_MANIFEST "tsukimi.exe.manifest"

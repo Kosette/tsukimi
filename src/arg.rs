@@ -5,7 +5,11 @@ use std::{
 };
 
 use clap::Parser;
-use tracing::{info, error, level_filters::LevelFilter};
+use tracing::{
+    error,
+    info,
+    level_filters::LevelFilter,
+};
 use tracing_subscriber::fmt::time::ChronoLocal;
 
 use crate::dyn_event;
@@ -28,7 +32,8 @@ pub struct Args {
     #[clap(long, short)]
     gsk_renderer: Option<String>,
 
-    /// XDG_CACHE_HOME. If not set, it will be set to %LOCALAPPDATA% on *Windows*. Never set on *Linux*.
+    /// XDG_CACHE_HOME. If not set, it will be set to %LOCALAPPDATA% on *Windows*. Never set on
+    /// *Linux*.
     #[clap(long)]
     xdg_cache_home: Option<String>,
 
@@ -94,7 +99,7 @@ impl Args {
                     Err(e) => {
                         error!("Failed to create tracing file {}", e);
                         return;
-                    },
+                    }
                 };
 
                 info!("Logging to file {}", f);
@@ -152,7 +157,7 @@ impl Args {
             info!("Windows: Falling back to default XDG_CACHE_HOME: %LOCALAPPDATA%");
             let config_local_dir = dirs::config_local_dir().expect("Failed to get %LOCALAPPDATA%");
             std::env::set_var("XDG_CACHE_HOME", config_local_dir);
-        } 
+        }
     }
 
     #[cfg(target_os = "windows")]
