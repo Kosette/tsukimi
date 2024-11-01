@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 安装交叉编译工具链
-sudo apt update && sudo apt upgrade -y
+sudo apt update && sudo apt install -f
 sudo apt install -y \
     gcc-aarch64-linux-gnu \
     g++-aarch64-linux-gnu \
@@ -11,7 +11,7 @@ sudo apt install -y \
 sudo apt install -y pkg-config
 
 # 安装 ARM64 版本的依赖库
-sudo apt install -y \
+sudo apt install -y --no-install-recommends \
     gettext:arm64 \
     libssl-dev:arm64 \
     libmpv-dev:arm64 \
