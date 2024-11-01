@@ -11,7 +11,11 @@ sudo apt install -y \
 sudo apt install -y pkg-config
 
 # 安装 ARM64 版本的依赖库
-sudo apt install -y --no-install-recommends \
+sudo apt-get install -y \
+    libarchive13t64:arm64 \
+    linux-libc-dev:arm64 \
+    libheif1:arm64
+sudo apt install -y \
     gettext:arm64 \
     libssl-dev:arm64 \
     libmpv-dev:arm64 \
