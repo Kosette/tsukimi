@@ -1,0 +1,62 @@
+name: Cross Linux Arm64
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "cross"
+    paths-ignore:
+      - "docs/**"
+      - "**/.gitignore"
+      - "**/.dockerignore"
+      - LICENSE
+      - "**/*.md"
+  # pull_request:
+  #   branches:
+  #     - "main"
+  #   paths-ignore:
+  #     - "docs/**"
+  #     - "**/.gitignore"
+  #     - "**/.dockerignore"
+  #     - LICENSE
+  #     - "**/*.md"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - platform: amd64
+            arch: x86_64
+          # - platform: arm64
+          #   arch: aarch64
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      
+      - name: Add arm64 architecture
+        run: sudo bash ./docker/add-arm64.sh
+
+      - name: Add dependencies and Building
+        run: |
+          bash ./docker/add-deps.sh
+          bash ./docker/cross-compile.sh
+
+      - name: Packaging
+        run: |
+          sudo cp target/aarch64-unknown-linux-gnu/release/tsukimi .
+          sudo cp target/debian/*.deb .
+          sudo cp -r i18n/locale .
+          sudo cp resources/moe*.xml .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tsukimi-${{matrix.arch}}-linux
+          path: |
+            locale/
+            tsukimi
+            *.deb
+            moe*.xml
