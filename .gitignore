@@ -1,5 +1,2 @@
-*
-!.github
-!src
-!.gitignore
-!Cargo*
+target/
+i18n/

@@ -1,253 +1,152 @@
-use clap::{Parser, Subcommand};
-use serde::{Deserialize, Serialize};
-use std::error::Error;
+#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
+mod utils;
+
+use eframe::egui;
+use rfd::FileDialog;
 use std::path::PathBuf;
-use std::{env, fs::File, io::Write};
-use winreg::{enums::*, RegKey};
 
-#[derive(Parser)]
-#[command(author, version, about, long_about = None)]
-struct Cli {
-    #[command(subcommand)]
-    command: Option<Commands>,
+#[derive(Default)]
+struct TsukimiTool {
+    config_path: Option<PathBuf>,
+    convert_status_message: String,
+    backup_status_message: String,
 }
 
-#[derive(Subcommand)]
-enum Commands {
-    /// Convert tsukimi.toml into .reg file, for older version. `--help` to see more.
-    Convert {
-        /// Set the path to tsukimi.toml, optional.
-        /// default `%APPDATA%\tsukimi\tsukimi.toml`
-        #[arg(short, long)]
-        file: Option<String>,
-    },
-    /// Backup all keys in tsukimi registry, for moe.tsukimi
-    Backup,
-}
+impl TsukimiTool {
+    fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        let mut style = (*cc.egui_ctx.style()).clone();
+        style.text_styles = [
+            (
+                egui::TextStyle::Heading,
+                egui::FontId::new(20.0, egui::FontFamily::Proportional),
+            ),
+            (
+                egui::TextStyle::Button,
+                egui::FontId::new(16.0, egui::FontFamily::Proportional),
+            ),
+            (
+                egui::TextStyle::Body,
+                egui::FontId::new(14.0, egui::FontFamily::Proportional),
+            ),
+        ]
+        .into();
+        cc.egui_ctx.set_style(style);
 
-#[derive(Deserialize, Serialize)]
-struct Config {
-    accounts: Vec<Account>,
-}
-
-#[derive(Deserialize, Serialize)]
-struct Account {
-    servername: String,
-    server: String,
-    username: String,
-    password: String,
-    port: String,
-    user_id: String,
-    access_token: String,
-}
-
-fn main() -> Result<(), Box<dyn Error>> {
-    let cli = Cli::parse();
-
-    match cli.command.unwrap_or(Commands::Convert { file: None }) {
-        Commands::Convert { file } => convert_toml_to_reg(file)?,
-        Commands::Backup => backup_registry()?,
-        // Commands::Migrate => migrate()?,
+        Default::default()
     }
 
-    Ok(())
+    fn clear_state(&mut self) {
+        self.config_path = None;
+        self.backup_status_message = "".to_string();
+        self.convert_status_message = "".to_string();
+    }
+
+    fn convert(&mut self) {
+        if let Some(config) = &self.config_path {
+            let result = utils::convert_toml_to_reg(config);
+
+            match result {
+                Ok(_) => self.convert_status_message = "Convert Success!".to_string(),
+                Err(e) => self.convert_status_message = format!("Convert failed: {}", e),
+            }
+        }
+    }
+
+    fn backup(&mut self) {
+        let result = utils::backup_registry();
+
+        match result {
+            Ok(_) => self.backup_status_message = "Backup Success!".to_string(),
+            Err(e) => self.backup_status_message = format!("Backup failed: {}", e),
+        }
+    }
 }
 
-fn convert_toml_to_reg(file: Option<String>) -> Result<(), Box<dyn Error>> {
-    let path = match file {
-        Some(f) => PathBuf::from(f),
-        None => {
-            let mut path = env::var("APPDATA").map(PathBuf::from)?;
-            path.push("tsukimi");
-            path.push("tsukimi.toml");
-            path
-        }
+impl eframe::App for TsukimiTool {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.heading("Tsukimi Tool");
+            ui.add_space(5.0);
+            ui.label("Convert and backup Tsukimi configs");
+            ui.add_space(15.0);
+
+            if !ctx.input(|i| i.raw.dropped_files.is_empty()) {
+                let dropped_files = ctx.input(|i| i.raw.dropped_files.clone());
+                if let Some(config) = &dropped_files[1].path {
+                    self.config_path = Some(config.to_path_buf());
+                }
+            }
+
+            ui.separator();
+            ui.add_space(10.0);
+            ui.heading("Convert");
+            ui.add_space(15.0);
+
+            ui.horizontal(|ui| {
+                if ui.button("Select Config File").clicked() {
+                    if let Some(path) = FileDialog::new()
+                        .add_filter("config files", &["toml"])
+                        .pick_file()
+                    {
+                        self.config_path = Some(path);
+                    }
+                }
+            });
+
+            if let Some(config) = &self.config_path {
+                ui.label(format!("{}", config.display()));
+            }
+
+            ui.add_space(10.0);
+
+            ui.horizontal(|ui| {
+                let has_file = self.config_path.is_some();
+
+                if ui
+                    .add_enabled(has_file, egui::Button::new("Convert!"))
+                    .clicked()
+                {
+                    self.convert();
+                }
+
+                if ui.button("Clear").clicked() {
+                    self.clear_state();
+                }
+            });
+            ui.label(self.convert_status_message.to_string());
+
+            ui.add_space(10.0);
+            ui.separator();
+            ui.add_space(10.0);
+
+            ui.heading("Backup");
+            ui.add_space(15.0);
+
+            ui.horizontal(|ui| {
+                if ui.button("Backup!").clicked() {
+                    self.backup();
+                }
+
+                if ui.button("Clear").clicked() {
+                    self.clear_state();
+                }
+            });
+            ui.label(self.backup_status_message.to_string());
+        });
+    }
+}
+
+fn main() -> eframe::Result<()> {
+    let native_options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size([500.0, 420.0])
+            .with_title("Tsukimi Tool"),
+        ..Default::default()
     };
 
-    let toml_content = std::fs::read_to_string(path)?;
-    let config: Config = toml::from_str(&toml_content)?;
-    let json = serde_json::to_string(&config.accounts)?;
-    let reg_content = format!(
-        "Windows Registry Editor Version 5.00\r\n\r\n\
-        [HKEY_CURRENT_USER\\Software\\GSettings\\moe\\tsukimi]\r\n\
-        \"accounts\"=\"{}\"\r\n",
-        json.replace("\"", "\\\"")
-    );
-
-    let output_path = env::current_dir()?.join("tsukimi_accounts.reg");
-    let mut file = File::create(output_path)?;
-
-    file.write_all(&[0xFF, 0xFE])?;
-
-    for utf16_unit in reg_content.encode_utf16() {
-        file.write_all(&utf16_unit.to_le_bytes())?;
-    }
-
-    println!("Successfully generated .reg file at: `tsukimi_accounts.reg`",);
-    println!("You can now import this file by double-clicking it or using the 'regedit' command.");
-
-    Ok(())
-}
-
-fn backup_registry() -> Result<(), Box<dyn Error>> {
-    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let path = r"Software\GSettings\moe\tsukimi";
-    let key = hkcu.open_subkey(path)?;
-
-    let mut reg_content = String::from("Windows Registry Editor Version 5.00\r\n\r\n");
-    reg_content.push_str(&format!("[HKEY_CURRENT_USER\\{}]\r\n", path));
-
-    for value in key.enum_values().map(|x| x.unwrap()) {
-        let name = value.0;
-        let data = value.1;
-        let reg_type = data.vtype;
-        let raw_data = data.bytes;
-
-        let formatted_value = match reg_type {
-            REG_DWORD => {
-                let value = u32::from_le_bytes(raw_data[..4].try_into().unwrap());
-                format!("dword:{:08x}", value)
-            }
-            REG_QWORD => {
-                let value = u64::from_le_bytes(raw_data[..8].try_into().unwrap());
-                format!("qword:{:016x}", value)
-            }
-            REG_SZ | REG_EXPAND_SZ => {
-                let value = String::from_utf16_lossy(
-                    &raw_data
-                        .chunks_exact(2)
-                        .map(|chunk| u16::from_ne_bytes([chunk[0], chunk[1]]))
-                        .collect::<Vec<u16>>(),
-                );
-                format!(
-                    "\"{}\"",
-                    value
-                        .trim_end_matches('\0')
-                        .replace("\\", "\\\\")
-                        .replace("\"", "\\\"")
-                )
-            }
-            REG_MULTI_SZ => {
-                let values = String::from_utf16_lossy(
-                    &raw_data
-                        .chunks_exact(2)
-                        .map(|chunk| u16::from_ne_bytes([chunk[0], chunk[1]]))
-                        .collect::<Vec<u16>>(),
-                );
-                format!(
-                    "hex(7):{}",
-                    values
-                        .split('\0')
-                        .filter(|s| !s.is_empty())
-                        .collect::<Vec<&str>>()
-                        .iter()
-                        .map(|s| s
-                            .encode_utf16()
-                            .map(|c| format!("{:04x}", c))
-                            .collect::<Vec<String>>()
-                            .join(","))
-                        .collect::<Vec<String>>()
-                        .join(",00,")
-                )
-            }
-            _ => continue,
-        };
-
-        reg_content.push_str(&format!("\"{}\"={}\r\n", name, formatted_value));
-    }
-
-    let output_path = env::current_dir()?.join("tsukimi_backup.reg");
-    let mut file = File::create(output_path)?;
-
-    file.write_all(&[0xFF, 0xFE])?;
-
-    for utf16_unit in reg_content.encode_utf16() {
-        file.write_all(&utf16_unit.to_le_bytes())?;
-    }
-
-    println!("Successfully backed up registry to: `tsukimi_backup.reg`\ndouble-click it to import settings.");
-
-    Ok(())
-}
-
-fn _migrate() -> Result<(), Box<dyn Error>> {
-    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let path = r"Software\GSettings\moe\tsukimi";
-    let path_new = r"Software\GSettings\moe\tsuna\tsukimi";
-    let key = hkcu.open_subkey(path)?;
-
-    let mut reg_content = String::from("Windows Registry Editor Version 5.00\r\n\r\n");
-    reg_content.push_str(&format!("[HKEY_CURRENT_USER\\{}]\r\n", path_new));
-
-    for value in key.enum_values().map(|x| x.unwrap()) {
-        let name = value.0;
-        let data = value.1;
-        let reg_type = data.vtype;
-        let raw_data = data.bytes;
-
-        let formatted_value = match reg_type {
-            REG_DWORD => {
-                let value = u32::from_le_bytes(raw_data[..4].try_into().unwrap());
-                format!("dword:{:08x}", value)
-            }
-            REG_QWORD => {
-                let value = u64::from_le_bytes(raw_data[..8].try_into().unwrap());
-                format!("qword:{:016x}", value)
-            }
-            REG_SZ | REG_EXPAND_SZ => {
-                let value = String::from_utf16_lossy(
-                    &raw_data
-                        .chunks_exact(2)
-                        .map(|chunk| u16::from_ne_bytes([chunk[0], chunk[1]]))
-                        .collect::<Vec<u16>>(),
-                );
-                format!(
-                    "\"{}\"",
-                    value
-                        .trim_end_matches('\0')
-                        .replace("\\", "\\\\")
-                        .replace("\"", "\\\"")
-                )
-            }
-            REG_MULTI_SZ => {
-                let values = String::from_utf16_lossy(
-                    &raw_data
-                        .chunks_exact(2)
-                        .map(|chunk| u16::from_ne_bytes([chunk[0], chunk[1]]))
-                        .collect::<Vec<u16>>(),
-                );
-                format!(
-                    "hex(7):{}",
-                    values
-                        .split('\0')
-                        .filter(|s| !s.is_empty())
-                        .collect::<Vec<&str>>()
-                        .iter()
-                        .map(|s| s
-                            .encode_utf16()
-                            .map(|c| format!("{:04x}", c))
-                            .collect::<Vec<String>>()
-                            .join(","))
-                        .collect::<Vec<String>>()
-                        .join(",00,")
-                )
-            }
-            _ => continue,
-        };
-
-        reg_content.push_str(&format!("\"{}\"={}\r\n", name, formatted_value));
-    }
-
-    let output_path = env::current_dir()?.join("tsukimi_migrate.reg");
-    let mut file = File::create(output_path)?;
-
-    file.write_all(&[0xFF, 0xFE])?;
-
-    for utf16_unit in reg_content.encode_utf16() {
-        file.write_all(&utf16_unit.to_le_bytes())?;
-    }
-
-    println!("Successfully migrate registry to: `tsukimi_migrate.reg`\ndouble-click it to import settings",);
-
-    Ok(())
+    eframe::run_native(
+        "Tsukimi Tool",
+        native_options,
+        Box::new(|cc| Ok(Box::new(TsukimiTool::new(cc)))),
+    )
 }
