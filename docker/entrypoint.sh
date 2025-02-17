@@ -20,4 +20,8 @@ echo "######### PACKAGE VERSION ##########"
 # build
 cargo b -r --locked
 
+# package locale files
+tar -C i18n -czf tsukimi_locale.tar.gz locale
+
+# make deb package
 cargo-deb

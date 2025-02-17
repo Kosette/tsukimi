@@ -1,0 +1,25 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    purge)
+        # purge tsukimi.mo locale files
+        echo "Removing locale tsukimi.mo files..."
+        find /usr/share/locale -name 'tsukimi.mo' -delete
+
+        # remove tsukimi gschemas.xml
+        echo "Removing GLib schema file..."
+        rm -f /usr/share/glib-2.0/schemas/moe.tsuna.tsukimi.gschema.xml
+
+        # update glib schemas
+        if [ -x /usr/bin/glib-compile-schemas ]; then
+            echo "Updating GLib schemas after cleanup..."
+            /usr/bin/glib-compile-schemas /usr/share/glib-2.0/schemas/
+        else
+            echo "Error: glib-compile-schemas not found!" >&2
+            exit 1
+        fi
+        ;;
+esac
+
+exit 0
