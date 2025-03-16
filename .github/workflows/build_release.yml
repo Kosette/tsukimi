@@ -36,8 +36,8 @@ jobs:
         id: latest_tag
         run: |
           $json = Invoke-WebRequest "https://api.github.com/repos/Kosette/tsukimi/releases/latest" | ConvertFrom-Json
-          echo "LA_REL=$json.tag_name" >> "$GITHUB_OUTPUT"
-          echo "LA_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
+          echo "LA_REL=$($json.tag_name)" >> $ENV:GITHUB_OUTPUT
+          echo "LA_TAG=$(git describe --tags --abbrev=0)" >> $ENV:GITHUB_OUTPUT
 
       - name: Setup msys2
         if: ${{ steps.latest_tag.outputs.LA_REL != steps.latest_tag.outputs.LA_TAG }}
@@ -77,7 +77,7 @@ jobs:
         shell: msys2 {0}
         run: |
           export PATH="/c/Users/runneradmin/.cargo/bin:$PATH"
-          git checkout ${{ steps.latest_tag.outputs.LA_TAG }}
+          git reset --hard ${{ steps.latest_tag.outputs.LA_TAG }}
           rustup default stable-gnu
           cargo build --release --locked
 
@@ -164,9 +164,11 @@ jobs:
 
       - name: Calculate hash
         run: |
-          mv tsukimi-x86_64-windows-gnu/* .
-          sha512sum *.7z > tsukimi.sha512sum
-          sha512sum *.exe >> tsukimi.sha512sum
+          if [ -d "tsukimi-ucrt-x86_64-windows-gnu" ];\
+          then mv tsukimi-ucrt-x86_64-windows-gnu/* .;\
+          sha512sum *.7z > tsukimi.sha512sum;\
+          sha512sum *.exe >> tsukimi.sha512sum;\
+          else echo "skipped";fi
 
       - name: Upload Github Assets
         uses: softprops/action-gh-release@v2
