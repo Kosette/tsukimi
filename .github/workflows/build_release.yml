@@ -170,18 +170,16 @@ jobs:
           sha512sum *.exe >> tsukimi.sha512sum;\
           else echo "skipped";fi
 
-      - name: Get release notes
-        id: release_notes
-        run: |
-          sudo apt install jq curl -y
-          echo "NOTES=$(curl https://api.github.com/repos/tsukinaha/tsukimi/releases/latest | jq ".body")" >> $GITHUB_OUTPUT
-
       - name: Upload Github Assets
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          body: ${{ steps.release_notes.outputs.NOTES }}
+          body: |
+            > [!IMPORTANT]
+            > This release is for Windows ONLY.
+
+            Full-Changelog: https://github.com/tsukinaha/tsukimi/releases/tag/${{ needs.build.outputs.latest_tag }}
           files: |
             *.7z
             *.exe
