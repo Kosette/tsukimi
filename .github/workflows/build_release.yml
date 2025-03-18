@@ -1,6 +1,8 @@
 name: Build and Release
 on:
   workflow_dispatch:
+  push:
+    branches: ["release"]
   schedule:
     - cron: "8 15 * * *"
 
@@ -23,6 +25,7 @@ jobs:
 
     outputs:
       latest_tag: ${{ steps.latest_tag.outputs.LA_TAG }}
+      latest_rel: ${{ steps.latest_tag.outputs.LA_REL }}
 
     steps:
       - name: Checkout
@@ -160,17 +163,18 @@ jobs:
 
     steps:
       - name: Download artifacts
+        if: ${{ needs.build.outputs.latest_tag != needs.build.outputs.latest_rel }}
         uses: actions/download-artifact@v4
 
       - name: Calculate hash
+        if: ${{ needs.build.outputs.latest_tag != needs.build.outputs.latest_rel }}
         run: |
-          if [ -d "tsukimi-ucrt-x86_64-windows-gnu" ];\
-          then mv tsukimi-ucrt-x86_64-windows-gnu/* .;\
-          sha512sum *.7z > tsukimi.sha512sum;\
-          sha512sum *.exe >> tsukimi.sha512sum;\
-          else echo "skipped";fi
+          mv tsukimi-ucrt-x86_64-windows-gnu/* .
+          sha512sum *.7z > tsukimi.sha512sum
+          sha512sum *.exe >> tsukimi.sha512sum
 
       - name: Upload Github Assets
+        if: ${{ needs.build.outputs.latest_tag != needs.build.outputs.latest_rel }}
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
