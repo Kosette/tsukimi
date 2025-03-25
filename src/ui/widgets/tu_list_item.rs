@@ -130,7 +130,7 @@ pub mod imp {
             while let Some(child) = self.overlay_button_box.first_child() {
                 self.overlay_button_box.remove(&child);
             }
-            
+
             obj.set_up();
             obj.gesture();
         }

@@ -2,12 +2,12 @@ name: Build and Push Ubuntu-Rust-gtk4
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "docker/**"
-  schedule:
-    - cron: "15 8 1 * *"
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - "docker/**"
+  # schedule:
+  #   - cron: "15 8 1 * *"
 
 jobs:
   build-and-push:

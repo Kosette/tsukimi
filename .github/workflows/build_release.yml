@@ -1,8 +1,9 @@
 name: Publish Release
 on:
-  push:
-    tags:
-      - v*
+  workflow_dispatch:
+  # push:
+  #   tags:
+  #     - v*
 
 env:
   CARGO_TERM_COLOR: always
