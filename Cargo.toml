@@ -86,7 +86,7 @@ windows = { version = "0.62.1", features = [
 [profile.release]
 lto = true
 strip = true
-debug = "limited"
+opt-level = "s"
 codegen-units = 1
 
 [profile.dev]

@@ -61,7 +61,7 @@ pub mod xattr {
                 if err.code().0 as u32 == 2 {
                     return Err(anyhow!(io::Error::new(
                         io::ErrorKind::NotFound,
-                        format!("Attribute {} not found", attr_name),
+                        format!("Attribute {attr_name} not found"),
                     )));
                 }
                 return Err(anyhow!(err));
@@ -80,10 +80,7 @@ pub mod xattr {
             CloseHandle(handle)?;
 
             if bytes_read != file_size as u32 {
-                return Err(anyhow!(io::Error::new(
-                    io::ErrorKind::Other,
-                    "Failed to read entire stream",
-                )));
+                return Err(anyhow!(io::Error::other("Failed to read entire stream",)));
             }
 
             match str::from_utf8(&buffer) {
@@ -149,10 +146,7 @@ pub mod xattr {
             CloseHandle(handle)?;
 
             if bytes_written != buffer.len() as u32 {
-                return Err(anyhow!(io::Error::new(
-                    io::ErrorKind::Other,
-                    "Failed to write entire stream",
-                )));
+                return Err(anyhow!(io::Error::other("Failed to write entire stream",)));
             }
 
             Ok(())

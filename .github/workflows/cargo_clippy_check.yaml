@@ -10,7 +10,6 @@ jobs:
     container:
       image: ubuntu:plucky
     steps:
-
       - name: Setup Environment
         run: |
           apt-get update

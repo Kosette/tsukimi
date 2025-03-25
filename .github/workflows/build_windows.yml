@@ -62,10 +62,10 @@ jobs:
 
       - name: Install sccache and nsis
         run: |
-            choco install sccache nsis
-            sccache --start-server
-            sccache -z
-            sccache -s
+          choco install sccache nsis
+          sccache --start-server
+          sccache -z
+          sccache -s
 
       - name: Install latest libmpv
         shell: pwsh

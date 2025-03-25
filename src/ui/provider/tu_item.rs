@@ -18,7 +18,7 @@ use crate::{
         jellyfin_client::JELLYFIN_CLIENT,
         structs::{
             SimpleListItem,
-            SongWidgetView
+            SongWidgetView,
         },
     },
     ui::{
