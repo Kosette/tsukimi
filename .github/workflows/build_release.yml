@@ -81,7 +81,7 @@ jobs:
         run: |
           export PATH="/c/Users/runneradmin/.cargo/bin:$PATH"
           git reset --hard ${{ steps.latest_tag.outputs.LA_TAG }}
-          rustup default stable-gnu
+          rustup default nightly-gnu
           cargo build --release --locked
 
       - name: Prepare Package
@@ -132,8 +132,9 @@ jobs:
         if: ${{ steps.latest_tag.outputs.LA_REL != steps.latest_tag.outputs.LA_TAG }}
         shell: powershell
         run: |
+          choco install nsis
           cp ./installer/* artifact
-          makensis /V4 artifact/tsukimi_installer.nsi
+          & 'C:\Program Files (x86)\NSIS\makensis.exe' /V4 artifact/tsukimi_installer.nsi
           rm artifact/tsukimi_installer.nsi
 
       - name: Build Package
